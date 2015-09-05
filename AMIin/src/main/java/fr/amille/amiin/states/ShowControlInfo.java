@@ -33,7 +33,7 @@ public class ShowControlInfo implements State {
 				@Override
 				public void keyTyped(KeyEvent e) {
 					if (e.getKeyChar() == 'n') {
-						AMIin.mainFrame.removeKeyListener(this);
+						AMIin.mainFrame.mainPanel.removeKeyListener(this);
 						AMIin.mainFrame.mainPanel.changeState(States.EMPTY, context);
 						new MyAbstractSwingWorker() {
 							@Override
@@ -48,8 +48,8 @@ public class ShowControlInfo implements State {
 		AMIin.mainFrame.addComponentListener(new ComponentAdapter() {
 			public void componentResized(ComponentEvent e) {
 				if (!context.isEnded()) {
-					AMIin.mainFrame.removeComponentListener(this);
-					AMIin.mainFrame.removeKeyListener(keyAdapter);
+					AMIin.mainFrame.mainPanel.removeComponentListener(this);
+					AMIin.mainFrame.mainPanel.removeKeyListener(keyAdapter);
 					context.setState(ShowControlInfo.INSTANCE);
 				}
 			}
@@ -57,8 +57,8 @@ public class ShowControlInfo implements State {
 			@Override
 			public void componentMoved(ComponentEvent e) {
 				if (!context.isEnded()) {
-					AMIin.mainFrame.removeComponentListener(this);
-					AMIin.mainFrame.removeKeyListener(keyAdapter);
+					AMIin.mainFrame.mainPanel.removeComponentListener(this);
+					AMIin.mainFrame.mainPanel.removeKeyListener(keyAdapter);
 					context.setState(ShowControlInfo.INSTANCE);
 				}
 			}
@@ -81,8 +81,8 @@ public class ShowControlInfo implements State {
 		context.setBytesToPrint(fileInformations.toString());
 		AMIin.mainFrame.mainPanel.changeState(MainPanel.States.DRAW_CONTROL,
 				context);
-		AMIin.mainFrame.removeKeyListener(keyAdapter);
-		AMIin.mainFrame.addKeyListener(keyAdapter);
+		AMIin.mainFrame.mainPanel.removeKeyListener(keyAdapter);
+		AMIin.mainFrame.mainPanel.addKeyListener(keyAdapter);
 	}
 
 }

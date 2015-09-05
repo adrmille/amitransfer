@@ -65,7 +65,7 @@ public class PrintBlocks implements State {
 				@Override
 				public void keyTyped(KeyEvent e) {
 					if (e.getKeyChar() == 'n') {
-						AMIin.mainFrame.removeKeyListener(this);
+						AMIin.mainFrame.mainPanel.removeKeyListener(this);
 						context.setState(End.INSTANCE);
 					}
 				}
@@ -74,18 +74,18 @@ public class PrintBlocks implements State {
 		AMIin.mainFrame.addComponentListener(new ComponentAdapter() {
 			public void componentResized(ComponentEvent e) {
 				if (!context.isEnded()) {
-					AMIin.mainFrame.removeComponentListener(this);
-					AMIin.mainFrame.removeKeyListener(keyAdapter1);
-					AMIin.mainFrame.removeKeyListener(keyAdapter2);
+					AMIin.mainFrame.mainPanel.removeComponentListener(this);
+					AMIin.mainFrame.mainPanel.removeKeyListener(keyAdapter1);
+					AMIin.mainFrame.mainPanel.removeKeyListener(keyAdapter2);
 					context.setState(ShowControlInfo.INSTANCE);
 				}
 			}
 
 			public void componentMoved(ComponentEvent e) {
 				if (!context.isEnded()) {
-					AMIin.mainFrame.removeComponentListener(this);
-					AMIin.mainFrame.removeKeyListener(keyAdapter1);
-					AMIin.mainFrame.removeKeyListener(keyAdapter2);
+					AMIin.mainFrame.mainPanel.removeComponentListener(this);
+					AMIin.mainFrame.mainPanel.removeKeyListener(keyAdapter1);
+					AMIin.mainFrame.mainPanel.removeKeyListener(keyAdapter2);
 					context.setState(ShowControlInfo.INSTANCE);
 				}
 			}
@@ -107,11 +107,11 @@ public class PrintBlocks implements State {
 			AMIin.mainFrame.mainPanel.changeState(States.DRAW, context);
 
 			if (bytesToPrint[bytesToPrint.length - 2] != -1) {
-				AMIin.mainFrame.removeKeyListener(keyAdapter1);
-				AMIin.mainFrame.addKeyListener(keyAdapter1);
+				AMIin.mainFrame.mainPanel.removeKeyListener(keyAdapter1);
+				AMIin.mainFrame.mainPanel.addKeyListener(keyAdapter1);
 			} else {
-				AMIin.mainFrame.removeKeyListener(keyAdapter2);
-				AMIin.mainFrame.addKeyListener(keyAdapter2);
+				AMIin.mainFrame.mainPanel.removeKeyListener(keyAdapter2);
+				AMIin.mainFrame.mainPanel.addKeyListener(keyAdapter2);
 			}
 
 		} catch (FileNotFoundException e) {
