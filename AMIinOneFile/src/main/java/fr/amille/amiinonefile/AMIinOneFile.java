@@ -37,9 +37,10 @@ public class AMIinOneFile {
 	public static Color CURRENT_FIRST_PIXEL_COLOR = AMIConstants.STARTER_PIXEL1;
 	public static KeyAdapter KEY_ADAPTER_1;
 	public static KeyAdapter KEY_ADAPTER_2;
+	public static AMIinOneFile MAIN_INSTANCE;
 
 	public static enum States {
-		PRINT, EMPTY, DRAW, WAITING_FILE, DRAW_CONTROL, END
+		PRINT, EMPTY, END
 	}
 
 	/**
@@ -47,7 +48,10 @@ public class AMIinOneFile {
 	 * @throws FileNotFoundException
 	 */
 	public static void main(String[] args) {
+		MAIN_INSTANCE = new AMIinOneFile();
+	}
 
+	public AMIinOneFile() {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				MAIN_FRAME = new MainFrame();
@@ -67,17 +71,15 @@ public class AMIinOneFile {
 		public static final Color LAST_PIXEL = new Color(255, 73, 253);
 	}
 
-	public static class Context {
+	public class Context {
 
 		private State currentState;
 		private File currentFile;
 		private int positionInFile;
-		private int[] bytesToPrint;
 
 		public void goNext() {
 			if (currentState == null) {
 				positionInFile = 0;
-				bytesToPrint = null;
 				currentFile = null;
 				currentState = WaitFile.INSTANCE;
 			}
@@ -87,14 +89,6 @@ public class AMIinOneFile {
 		public void setState(State state) {
 			currentState = state;
 			goNext();
-		}
-
-		private int[] bytesToInt(byte[] bytes) {
-			int[] result = new int[bytes.length];
-			for (int i = 0; i < bytes.length; i++) {
-				result[i] = bytes[i];
-			}
-			return result;
 		}
 
 		public File getCurrentFile() {
@@ -111,18 +105,6 @@ public class AMIinOneFile {
 
 		public void setPositionInFile(int positionInFile) {
 			this.positionInFile = positionInFile;
-		}
-
-		public int[] getBytesToPrint() {
-			return bytesToPrint;
-		}
-
-		public void setBytesToPrint(int[] bytesToPrint) {
-			this.bytesToPrint = bytesToPrint;
-		}
-
-		public void setBytesToPrint(String stringToPrint) {
-			this.bytesToPrint = bytesToInt(stringToPrint.getBytes());
 		}
 
 		public boolean isEnded() {
@@ -169,13 +151,13 @@ public class AMIinOneFile {
 					@Override
 					public void keyTyped(KeyEvent e) {
 						if (e.getKeyChar() == 'n') {
-							final int blockSize = (MAIN_FRAME.mainPanel.getWidth()
-									* MAIN_FRAME.mainPanel.getHeight() * 3) - 6;
+							final int blockSize = (MAIN_FRAME.mainPanel.getWidth() * MAIN_FRAME.mainPanel.getHeight()
+									* 3) - 6;
 							MAIN_FRAME.mainPanel.removeKeyListener(this);
 							context.setPositionInFile(context.getPositionInFile() + blockSize);
 							context.switchFirstPixelColor();
 							MAIN_FRAME.mainPanel.changeState(States.EMPTY, context);
-							new MyAbstractSwingWorker() {
+							MAIN_INSTANCE.new MyAbstractSwingWorker() {
 								@Override
 								public void whatToExecute() {
 									context.setState(PrintBlocks.INSTANCE);
@@ -224,11 +206,9 @@ public class AMIinOneFile {
 				}
 
 				in = new FileInputStream(context.getCurrentFile());
-				final int blockSize = (MAIN_FRAME.mainPanel.getWidth()
-						* MAIN_FRAME.mainPanel.getHeight() * 3) - 6;
-				final int[] bytesToPrint = extractBytesFromFile(in, context.getPositionInFile(), blockSize);
-				context.setBytesToPrint(bytesToPrint);
-				MAIN_FRAME.mainPanel.changeState(States.DRAW, context);
+				final int blockSize = (MAIN_FRAME.mainPanel.getWidth() * MAIN_FRAME.mainPanel.getHeight() * 3) - 6;
+				final byte[] bytesToPrint = extractBytesFromFile(in, context.getPositionInFile(), blockSize);
+				MAIN_FRAME.mainPanel.setBytesToPrint(AMIinOneFile.CURRENT_FIRST_PIXEL_COLOR, bytesToPrint);
 
 				if (bytesToPrint[bytesToPrint.length - 2] != -1) {
 					MAIN_FRAME.mainPanel.removeKeyListener(KEY_ADAPTER_1);
@@ -256,15 +236,15 @@ public class AMIinOneFile {
 			}
 		}
 
-		private int[] extractBytesFromFile(FileInputStream in, int start, int blockSize) throws IOException {
+		private byte[] extractBytesFromFile(FileInputStream in, int start, int blockSize) throws IOException {
 
-			final int[] values = new int[blockSize];
+			final byte[] values = new byte[blockSize];
 			int index = 0;
 			int c;
 			in.skip(start);
 			while (index < blockSize) {
 				c = in.read();
-				values[index] = c;
+				values[index] = (byte) c;
 				index++;
 			}
 			return values;
@@ -274,52 +254,26 @@ public class AMIinOneFile {
 	public static class ShowControlInfo implements State {
 
 		public final static ShowControlInfo INSTANCE = new ShowControlInfo();
-		private static KeyAdapter keyAdapter;
 
 		private ShowControlInfo() {
 		}
 
 		@Override
 		public void goNext(final Context context) {
-			if (keyAdapter == null) {
-				keyAdapter = new KeyAdapter() {
-					@Override
-					public void keyTyped(KeyEvent e) {
-						if (e.getKeyChar() == 'n') {
-							MAIN_FRAME.mainPanel.removeKeyListener(this);
-							MAIN_FRAME.mainPanel.changeState(States.EMPTY, context);
-							new MyAbstractSwingWorker() {
-								@Override
-								public void whatToExecute() {
-									context.setState(PrintBlocks.INSTANCE);
-								}
-							}.execute();
-						}
-					}
-				};
-			}
-			MAIN_FRAME.addComponentListener(new ComponentAdapter() {
-				public void componentResized(ComponentEvent e) {
-					if (!context.isEnded()) {
-						MAIN_FRAME.mainPanel.removeComponentListener(this);
-						MAIN_FRAME.mainPanel.removeKeyListener(keyAdapter);
-						context.setState(ShowControlInfo.INSTANCE);
-					}
-				}
-
+			MAIN_FRAME.renewMainPanel();
+			final KeyAdapter keyAdapter = new KeyAdapter() {
 				@Override
-				public void componentMoved(ComponentEvent e) {
-					if (!context.isEnded()) {
-						MAIN_FRAME.mainPanel.removeComponentListener(this);
-						MAIN_FRAME.mainPanel.removeKeyListener(keyAdapter);
-						context.setState(ShowControlInfo.INSTANCE);
+				public void keyTyped(KeyEvent e) {
+					if (e.getKeyChar() == 'n') {
+						MAIN_INSTANCE.new MyAbstractSwingWorker() {
+							@Override
+							public void whatToExecute() {
+								context.setState(PrintBlocks.INSTANCE);
+							}
+						}.execute();
 					}
 				}
-			});
-			if (context.getCurrentFile() == null) {
-				System.err.println("Missing file in ShowControlInfo state");
-				context.setState(null);
-			}
+			};
 			final StringBuilder fileInformations = new StringBuilder();
 			fileInformations.append(context.getCurrentFile().getName());
 			fileInformations.append("\n");
@@ -331,12 +285,9 @@ public class AMIinOneFile {
 			fileInformations.append("\n");
 			fileInformations.append(context.getPositionInFile());
 			fileInformations.append("EOF_EOF");
-			context.setBytesToPrint(fileInformations.toString());
-			MAIN_FRAME.mainPanel.changeState(States.DRAW_CONTROL, context);
-			MAIN_FRAME.mainPanel.removeKeyListener(keyAdapter);
+			MAIN_FRAME.mainPanel.setBytesToPrint(AMIConstants.CONTROL_PIXEL, fileInformations.toString());
+			MAIN_FRAME.revalidate();
 			MAIN_FRAME.mainPanel.addKeyListener(keyAdapter);
-			// AMIinOneFile.mainFrame.removeKeyListener(keyAdapter);
-			// AMIinOneFile.mainFrame.addKeyListener(keyAdapter);
 		}
 	}
 
@@ -360,8 +311,7 @@ public class AMIinOneFile {
 
 		@Override
 		public void goNext(final Context context) {
-			MAIN_FRAME.mainPanel.changeState(States.WAITING_FILE, context);
-			MAIN_FRAME.mainPanel.hideAll();
+			MAIN_FRAME.renewMainPanel();
 			final JButton fileChooserButton = new JButton("File chooser");
 			MAIN_FRAME.mainPanel.setFileChooserButton(fileChooserButton);
 			fileChooserButton.addActionListener(new ActionListener() {
@@ -375,21 +325,30 @@ public class AMIinOneFile {
 	}
 
 	@SuppressWarnings("serial")
-	public static class MainFrame extends JFrame {
+	public class MainFrame extends JFrame {
 
-		public MainPanel mainPanel = new MainPanel();
+		public MainPanel mainPanel;
 
 		public MainFrame() {
-			this.getContentPane().add(mainPanel);
+			renewMainPanel();
 			this.pack();
 			this.setVisible(true);
 			this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 			this.setTitle("AMIin");
 		}
+
+		public void renewMainPanel() {
+			if (mainPanel != null) {
+				this.getContentPane().remove(mainPanel);
+			}
+			mainPanel = MAIN_INSTANCE.new MainPanel();
+			this.getContentPane().add(mainPanel);
+			mainPanel.setVisible(true);
+		}
 	}
 
 	@SuppressWarnings("serial")
-	public static class MainPanel extends Panel {
+	public class MainPanel extends Panel {
 
 		private States state;
 		private int[] bytesToPrint;
@@ -412,7 +371,7 @@ public class AMIinOneFile {
 				context.setCurrentFile(fileChooser.getSelectedFile());
 			}
 		}
-		
+
 		public void hideAll() {
 			bytesToPrint = null;
 			mainLabel.setVisible(false);
@@ -427,12 +386,6 @@ public class AMIinOneFile {
 			state = newState;
 
 			switch (state) {
-			case DRAW:
-				bytesToPrint = context.getBytesToPrint();
-				break;
-			case DRAW_CONTROL:
-				bytesToPrint = context.getBytesToPrint();
-				break;
 			case EMPTY:
 				break;
 			case END:
@@ -454,8 +407,6 @@ public class AMIinOneFile {
 				mainLabel.setText("Ready !");
 				mainLabel.setVisible(true);
 				break;
-			case WAITING_FILE:
-				break;
 			default:
 				break;
 			}
@@ -466,13 +417,7 @@ public class AMIinOneFile {
 		public void paint(Graphics graph) {
 			super.paint(graph);
 
-			if ((state == States.DRAW || state == States.DRAW_CONTROL) && bytesToPrint != null) {
-
-				if (state == States.DRAW) {
-					graph.setColor(AMIinOneFile.CURRENT_FIRST_PIXEL_COLOR);
-				} else if (state == States.DRAW_CONTROL) {
-					graph.setColor(AMIConstants.CONTROL_PIXEL);
-				}
+			if (bytesToPrint != null) {
 
 				graph.fillRect(0, 0, 1, 1);
 
@@ -500,8 +445,7 @@ public class AMIinOneFile {
 				}
 
 				graph.setColor(AMIConstants.LAST_PIXEL);
-				graph.fillRect(MAIN_FRAME.mainPanel.getWidth() - 1,
-						MAIN_FRAME.mainPanel.getHeight() - 1, 1, 1);
+				graph.fillRect(MAIN_FRAME.mainPanel.getWidth() - 1, MAIN_FRAME.mainPanel.getHeight() - 1, 1, 1);
 			}
 		}
 
@@ -524,9 +468,40 @@ public class AMIinOneFile {
 		public void setRestartButton(JButton restartButton) {
 			this.restartButton = restartButton;
 		}
+
+		public int[] getBytesToPrint() {
+			return bytesToPrint;
+		}
+
+		private byte[] colorToBytes(Color color) {
+			final byte[] bytes = new byte[3];
+			bytes[0] = (byte) color.getRed();
+			bytes[1] = (byte) color.getGreen();
+			bytes[2] = (byte) color.getBlue();
+			return bytes;
+		}
+
+		public void setBytesToPrint(Color starterPixel, byte[] bytesToPrint) {
+			this.bytesToPrint = bytesToInt(colorToBytes(starterPixel), bytesToPrint);
+		}
+
+		public void setBytesToPrint(Color starterPixel, String stringToPrint) {
+			this.bytesToPrint = bytesToInt(colorToBytes(starterPixel), stringToPrint.getBytes());
+		}
+
+		private int[] bytesToInt(byte[] starterBytes, byte[] bytes) {
+			int[] result = new int[starterBytes.length + bytes.length];
+			for (int i = 0; i < starterBytes.length; i++) {
+				result[i] = starterBytes[i];
+			}
+			for (int i = starterBytes.length; i < bytes.length; i++) {
+				result[i] = bytes[i];
+			}
+			return result;
+		}
 	}
 
-	public static abstract class MyAbstractSwingWorker {
+	public abstract class MyAbstractSwingWorker {
 
 		public static final int SLEEP_TIME_MS = 50;
 
