@@ -9,10 +9,9 @@ import java.awt.Graphics;
 import java.awt.Panel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -34,14 +33,8 @@ import javax.swing.SwingWorker;
 public class AMIinOneFile {
 
 	public static MainFrame MAIN_FRAME;
-	public static Color CURRENT_FIRST_PIXEL_COLOR = AMIConstants.STARTER_PIXEL1;
-	public static KeyAdapter KEY_ADAPTER_1;
-	public static KeyAdapter KEY_ADAPTER_2;
 	public static AMIinOneFile MAIN_INSTANCE;
-
-	public static enum States {
-		PRINT, EMPTY, END
-	}
+	public static char NEXT_KEY = 'n';
 
 	/**
 	 * @param args
@@ -65,9 +58,8 @@ public class AMIinOneFile {
 	public interface AMIConstants {
 		public static final int WIN_W = 300;
 		public static final int WIN_H = 300;
-		public static final Color STARTER_PIXEL1 = new Color(255, 73, 250);
-		public static final Color STARTER_PIXEL2 = new Color(255, 73, 251);
-		public static final Color CONTROL_PIXEL = new Color(255, 73, 252);
+		public static Color FIRST_PRINT_PIXEL_COLOR = new Color(255, 73, 250);
+		public static final Color CONTROL_PIXEL_COLOR = new Color(255, 73, 252);
 		public static final Color LAST_PIXEL = new Color(255, 73, 253);
 	}
 
@@ -110,14 +102,6 @@ public class AMIinOneFile {
 		public boolean isEnded() {
 			return currentState == End.INSTANCE;
 		}
-
-		public void switchFirstPixelColor() {
-			if (CURRENT_FIRST_PIXEL_COLOR.getBlue() == AMIConstants.STARTER_PIXEL1.getBlue()) {
-				CURRENT_FIRST_PIXEL_COLOR = AMIConstants.STARTER_PIXEL2;
-			} else {
-				CURRENT_FIRST_PIXEL_COLOR = AMIConstants.STARTER_PIXEL1;
-			}
-		}
 	}
 
 	public static class End implements State {
@@ -129,7 +113,9 @@ public class AMIinOneFile {
 
 		@Override
 		public void goNext(final Context context) {
-			MAIN_FRAME.mainPanel.changeState(States.END, context);
+			MAIN_FRAME.renewMainPanel();
+			MAIN_FRAME.mainPanel.showText("Finish !");
+			MAIN_FRAME.mainPanel.showRestartButton(context);
 		}
 	}
 
@@ -146,76 +132,45 @@ public class AMIinOneFile {
 		}
 
 		private void printBlocks(final Context context) {
-			if (KEY_ADAPTER_1 == null) {
-				KEY_ADAPTER_1 = new KeyAdapter() {
-					@Override
-					public void keyTyped(KeyEvent e) {
-						if (e.getKeyChar() == 'n') {
-							final int blockSize = (MAIN_FRAME.mainPanel.getWidth() * MAIN_FRAME.mainPanel.getHeight()
-									* 3) - 6;
-							MAIN_FRAME.mainPanel.removeKeyListener(this);
-							context.setPositionInFile(context.getPositionInFile() + blockSize);
-							context.switchFirstPixelColor();
-							MAIN_FRAME.mainPanel.changeState(States.EMPTY, context);
-							MAIN_INSTANCE.new MyAbstractSwingWorker() {
-								@Override
-								public void whatToExecute() {
-									context.setState(PrintBlocks.INSTANCE);
-								}
-							}.execute();
-						}
-					}
-				};
-			}
-			if (KEY_ADAPTER_2 == null) {
-				KEY_ADAPTER_2 = new KeyAdapter() {
-					@Override
-					public void keyTyped(KeyEvent e) {
-						if (e.getKeyChar() == 'n') {
-							MAIN_FRAME.mainPanel.removeKeyListener(this);
-							context.setState(End.INSTANCE);
-						}
-					}
-				};
-			}
-			MAIN_FRAME.addComponentListener(new ComponentAdapter() {
-				public void componentResized(ComponentEvent e) {
-					if (!context.isEnded()) {
-						MAIN_FRAME.mainPanel.removeComponentListener(this);
-						MAIN_FRAME.mainPanel.removeKeyListener(KEY_ADAPTER_1);
-						MAIN_FRAME.mainPanel.removeKeyListener(KEY_ADAPTER_2);
-						context.setState(ShowControlInfo.INSTANCE);
+			MAIN_FRAME.renewMainPanel();
+			final KeyAdapter printNext = new KeyAdapter() {
+				@Override
+				public void keyTyped(KeyEvent e) {
+					if (e.getKeyChar() == NEXT_KEY) {
+						final int blockSize = (MAIN_FRAME.mainPanel.getWidth() * MAIN_FRAME.mainPanel.getHeight() * 3)
+								- 6;
+						context.setPositionInFile(context.getPositionInFile() + blockSize);
+						MAIN_INSTANCE.new MyAbstractSwingWorker() {
+							@Override
+							public void whatToExecute() {
+								context.setState(PrintBlocks.INSTANCE);
+							}
+						}.execute();
 					}
 				}
+			};
+			final KeyAdapter printEnd = new KeyAdapter() {
+				@Override
+				public void keyTyped(KeyEvent e) {
+					if (e.getKeyChar() == NEXT_KEY) {
+						MAIN_FRAME.mainPanel.removeKeyListener(this);
+						context.setState(End.INSTANCE);
+					}
+				}
+			};
 
-				public void componentMoved(ComponentEvent e) {
-					if (!context.isEnded()) {
-						MAIN_FRAME.mainPanel.removeComponentListener(this);
-						MAIN_FRAME.mainPanel.removeKeyListener(KEY_ADAPTER_1);
-						MAIN_FRAME.mainPanel.removeKeyListener(KEY_ADAPTER_2);
-						context.setState(ShowControlInfo.INSTANCE);
-					}
-				}
-			});
 			FileInputStream in = null;
 			try {
-
-				if (!context.getCurrentFile().exists()) {
-					System.err.println("Missing file in PrintBlock state");
-					context.setState(null);
-				}
 
 				in = new FileInputStream(context.getCurrentFile());
 				final int blockSize = (MAIN_FRAME.mainPanel.getWidth() * MAIN_FRAME.mainPanel.getHeight() * 3) - 6;
 				final byte[] bytesToPrint = extractBytesFromFile(in, context.getPositionInFile(), blockSize);
-				MAIN_FRAME.mainPanel.setBytesToPrint(AMIinOneFile.CURRENT_FIRST_PIXEL_COLOR, bytesToPrint);
+				MAIN_FRAME.mainPanel.setBytesToPrint(AMIConstants.FIRST_PRINT_PIXEL_COLOR, bytesToPrint);
 
 				if (bytesToPrint[bytesToPrint.length - 2] != -1) {
-					MAIN_FRAME.mainPanel.removeKeyListener(KEY_ADAPTER_1);
-					MAIN_FRAME.mainPanel.addKeyListener(KEY_ADAPTER_1);
+					MAIN_FRAME.addKeyListener(printNext);
 				} else {
-					MAIN_FRAME.mainPanel.removeKeyListener(KEY_ADAPTER_2);
-					MAIN_FRAME.mainPanel.addKeyListener(KEY_ADAPTER_2);
+					MAIN_FRAME.addKeyListener(printEnd);
 				}
 
 			} catch (FileNotFoundException e) {
@@ -264,7 +219,7 @@ public class AMIinOneFile {
 			final KeyAdapter keyAdapter = new KeyAdapter() {
 				@Override
 				public void keyTyped(KeyEvent e) {
-					if (e.getKeyChar() == 'n') {
+					if (e.getKeyChar() == NEXT_KEY) {
 						MAIN_INSTANCE.new MyAbstractSwingWorker() {
 							@Override
 							public void whatToExecute() {
@@ -285,9 +240,8 @@ public class AMIinOneFile {
 			fileInformations.append("\n");
 			fileInformations.append(context.getPositionInFile());
 			fileInformations.append("EOF_EOF");
-			MAIN_FRAME.mainPanel.setBytesToPrint(AMIConstants.CONTROL_PIXEL, fileInformations.toString());
-			MAIN_FRAME.revalidate();
-			MAIN_FRAME.mainPanel.addKeyListener(keyAdapter);
+			MAIN_FRAME.mainPanel.setBytesToPrint(AMIConstants.CONTROL_PIXEL_COLOR, fileInformations.toString());
+			MAIN_FRAME.addKeyListener(keyAdapter);
 		}
 	}
 
@@ -331,7 +285,6 @@ public class AMIinOneFile {
 
 		public MainFrame() {
 			renewMainPanel();
-			this.pack();
 			this.setVisible(true);
 			this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 			this.setTitle("AMIin");
@@ -341,24 +294,36 @@ public class AMIinOneFile {
 			if (mainPanel != null) {
 				this.getContentPane().remove(mainPanel);
 			}
-			mainPanel = MAIN_INSTANCE.new MainPanel();
+			final int winW = (this.getContentPane().getWidth() != 0) ? this.getContentPane().getWidth()
+					: AMIConstants.WIN_W;
+			final int winH = (this.getContentPane().getHeight() != 0) ? this.getContentPane().getHeight()
+					: AMIConstants.WIN_H;
+			mainPanel = MAIN_INSTANCE.new MainPanel(winW, winH);
 			this.getContentPane().add(mainPanel);
+			this.pack();
 			mainPanel.setVisible(true);
+		}
+
+		@Override
+		public synchronized void addKeyListener(KeyListener l) {
+			final KeyListener[] keyListeners = this.getKeyListeners();
+			for (int i = 0; i < keyListeners.length; i++) {
+				removeKeyListener(keyListeners[i]);
+			}
+			super.addKeyListener(l);
 		}
 	}
 
 	@SuppressWarnings("serial")
 	public class MainPanel extends Panel {
 
-		private States state;
 		private int[] bytesToPrint;
 		private JLabel mainLabel = new JLabel();
 		private JButton fileChooserButton;
 		private JButton restartButton;
 
-		public MainPanel() {
-			state = States.EMPTY;
-			setPreferredSize(new Dimension(AMIConstants.WIN_W, AMIConstants.WIN_H));
+		public MainPanel(int w, int h) {
+			setPreferredSize(new Dimension(w, h));
 			this.add(mainLabel);
 			hideAll();
 		}
@@ -368,7 +333,12 @@ public class AMIinOneFile {
 			MainPanel.this.add(fileChooser);
 			final int returnVal = fileChooser.showOpenDialog(MainPanel.this);
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
-				context.setCurrentFile(fileChooser.getSelectedFile());
+				final File file = fileChooser.getSelectedFile();
+				if (file == null || !file.exists()) {
+					context.setState(WaitFile.INSTANCE);
+				} else {
+					context.setCurrentFile(fileChooser.getSelectedFile());
+				}
 			}
 		}
 
@@ -379,38 +349,6 @@ public class AMIinOneFile {
 				fileChooserButton.setVisible(false);
 			if (restartButton != null)
 				restartButton.setVisible(false);
-		}
-
-		public void changeState(States newState, final Context context) {
-			hideAll();
-			state = newState;
-
-			switch (state) {
-			case EMPTY:
-				break;
-			case END:
-				mainLabel.setText("Finish !");
-				mainLabel.setVisible(true);
-				if (restartButton != null) {
-					this.remove(restartButton);
-				}
-				restartButton = new JButton("Restart");
-				this.add(restartButton);
-				restartButton.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						context.setState(null);
-					}
-				});
-				break;
-			case PRINT:
-				mainLabel.setText("Ready !");
-				mainLabel.setVisible(true);
-				break;
-			default:
-				break;
-			}
-			repaint();
 		}
 
 		@Override
@@ -449,6 +387,22 @@ public class AMIinOneFile {
 			}
 		}
 
+		public void showText(String text) {
+			mainLabel.setText(text);
+			mainLabel.setVisible(true);
+		}
+
+		public void showRestartButton(Context context) {
+			restartButton = new JButton("Restart");
+			this.add(restartButton);
+			restartButton.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					context.setState(null);
+				}
+			});
+		}
+
 		public JButton getFileChooserButton() {
 			return fileChooserButton;
 		}
@@ -483,10 +437,18 @@ public class AMIinOneFile {
 
 		public void setBytesToPrint(Color starterPixel, byte[] bytesToPrint) {
 			this.bytesToPrint = bytesToInt(colorToBytes(starterPixel), bytesToPrint);
+			MAIN_FRAME.revalidate();
+			MAIN_FRAME.repaint();
+			this.revalidate();
+			this.repaint();
 		}
 
 		public void setBytesToPrint(Color starterPixel, String stringToPrint) {
 			this.bytesToPrint = bytesToInt(colorToBytes(starterPixel), stringToPrint.getBytes());
+			MAIN_FRAME.revalidate();
+			MAIN_FRAME.repaint();
+			this.revalidate();
+			this.repaint();
 		}
 
 		private int[] bytesToInt(byte[] starterBytes, byte[] bytes) {
