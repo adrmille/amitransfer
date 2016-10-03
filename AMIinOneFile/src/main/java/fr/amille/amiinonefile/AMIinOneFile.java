@@ -75,7 +75,7 @@ public class AMIinOneFile {
 				currentFile = null;
 				currentState = WaitFile.INSTANCE;
 			}
-			currentState.goNext(this);
+			currentState.goNext(Context.this);
 		}
 
 		public void setState(State state) {
@@ -102,6 +102,17 @@ public class AMIinOneFile {
 		public boolean isEnded() {
 			return currentState == End.INSTANCE;
 		}
+	}
+	
+	public interface State {
+
+		/**
+		 * Execute and go next state.
+		 * 
+		 * @param context
+		 */
+		public void goNext(Context context);
+
 	}
 
 	public static class End implements State {
@@ -245,17 +256,6 @@ public class AMIinOneFile {
 		}
 	}
 
-	public interface State {
-
-		/**
-		 * Execute and go next state.
-		 * 
-		 * @param context
-		 */
-		public void goNext(Context context);
-
-	}
-
 	public static class WaitFile implements State {
 
 		public final static WaitFile INSTANCE = new WaitFile();
@@ -271,10 +271,16 @@ public class AMIinOneFile {
 			fileChooserButton.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					MAIN_FRAME.mainPanel.showFileChooser(context);
-					context.setState(ShowControlInfo.INSTANCE);
+					final File file = MAIN_FRAME.mainPanel.getFileToTransfert();
+					if (file == null || !file.exists()) {
+						context.setState(WaitFile.INSTANCE);
+					} else {
+						context.setCurrentFile(file);
+						context.setState(ShowControlInfo.INSTANCE);
+					}
 				}
 			});
+			MAIN_FRAME.mainPanel.refresh();
 		}
 	}
 
@@ -327,19 +333,16 @@ public class AMIinOneFile {
 			this.add(mainLabel);
 			hideAll();
 		}
-
-		public void showFileChooser(Context context) {
+		
+		public File getFileToTransfert() {
+			File file = null;
 			final JFileChooser fileChooser = new JFileChooser();
 			MainPanel.this.add(fileChooser);
 			final int returnVal = fileChooser.showOpenDialog(MainPanel.this);
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
-				final File file = fileChooser.getSelectedFile();
-				if (file == null || !file.exists()) {
-					context.setState(WaitFile.INSTANCE);
-				} else {
-					context.setCurrentFile(fileChooser.getSelectedFile());
-				}
+				file = fileChooser.getSelectedFile();
 			}
+			return file;
 		}
 
 		public void hideAll() {
@@ -437,14 +440,15 @@ public class AMIinOneFile {
 
 		public void setBytesToPrint(Color starterPixel, byte[] bytesToPrint) {
 			this.bytesToPrint = bytesToInt(colorToBytes(starterPixel), bytesToPrint);
-			MAIN_FRAME.revalidate();
-			MAIN_FRAME.repaint();
-			this.revalidate();
-			this.repaint();
+			refresh();
 		}
 
 		public void setBytesToPrint(Color starterPixel, String stringToPrint) {
 			this.bytesToPrint = bytesToInt(colorToBytes(starterPixel), stringToPrint.getBytes());
+			refresh();
+		}
+		
+		public void refresh() {
 			MAIN_FRAME.revalidate();
 			MAIN_FRAME.repaint();
 			this.revalidate();
