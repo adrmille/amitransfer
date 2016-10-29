@@ -13,7 +13,7 @@ import fr.amille.amiout.view.MainFrame;
  * 
  */
 public class AMIout {
-	
+
 	public static MainFrame mainFrame;
 
 	public AMIout() {
@@ -29,7 +29,11 @@ public class AMIout {
 				mainFrame = new MainFrame();
 				AMIout.mainFrame.setVisible(true);
 				final Context context = new Context();
-				context.goNext();
+				try {
+					context.setState(null);
+				} catch (Exception e) {
+					context.backToStartState();
+				}
 			}
 		});
 

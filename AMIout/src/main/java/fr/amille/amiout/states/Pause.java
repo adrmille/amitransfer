@@ -3,6 +3,11 @@
  */
 package fr.amille.amiout.states;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.JButton;
+
 import fr.amille.amiout.AMIout;
 import fr.amille.amiout.view.MainPanel;
 
@@ -20,8 +25,15 @@ public class Pause implements State {
 	@Override
 	public void goNext(final Context context) {
 
-		AMIout.mainFrame.mainPanel.changeState(MainPanel.States.PAUSE, context);
+		final MainPanel mainPanel = AMIout.mainFrame.getMainPanel();
 
+		final JButton resumeButton = mainPanel.createButton("Mouse moved, RESUME !");
+		resumeButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				context.setState(SearchingControlPixel.INSTANCE);
+			}
+		});
 	}
 
 }

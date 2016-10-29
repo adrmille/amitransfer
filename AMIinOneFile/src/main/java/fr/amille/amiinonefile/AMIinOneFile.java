@@ -1,6 +1,7 @@
 package fr.amille.amiinonefile;
+
 /**
- * 
+ *
  */
 
 import java.awt.Color;
@@ -27,7 +28,7 @@ import javax.swing.SwingWorker;
 /**
  * Don't mind the code not following standards, this have to fit into one class
  * so it can be easily copied into the target environment.
- * 
+ *
  * @author amille
  */
 public class AMIinOneFile {
@@ -46,6 +47,7 @@ public class AMIinOneFile {
 
 	public AMIinOneFile() {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() {
 				MAIN_FRAME = new MainFrame();
 				MAIN_FRAME.setVisible(true);
@@ -70,21 +72,22 @@ public class AMIinOneFile {
 		private int positionInFile;
 
 		public void goNext() {
-			if (currentState == null) {
-				positionInFile = 0;
-				currentFile = null;
-				currentState = WaitFile.INSTANCE;
+			if (this.currentState == null) {
+				this.positionInFile = 0;
+				this.currentFile = null;
+				this.currentState = WaitFile.INSTANCE;
 			}
-			currentState.goNext(Context.this);
+			System.out.println("New state: " + this.currentState.getClass().getSimpleName());
+			this.currentState.goNext(Context.this);
 		}
 
 		public void setState(State state) {
-			currentState = state;
-			goNext();
+			this.currentState = state;
+			this.goNext();
 		}
 
 		public File getCurrentFile() {
-			return currentFile;
+			return this.currentFile;
 		}
 
 		public void setCurrentFile(File currentFile) {
@@ -92,7 +95,7 @@ public class AMIinOneFile {
 		}
 
 		public int getPositionInFile() {
-			return positionInFile;
+			return this.positionInFile;
 		}
 
 		public void setPositionInFile(int positionInFile) {
@@ -100,15 +103,15 @@ public class AMIinOneFile {
 		}
 
 		public boolean isEnded() {
-			return currentState == End.INSTANCE;
+			return this.currentState == End.INSTANCE;
 		}
 	}
-	
+
 	public interface State {
 
 		/**
 		 * Execute and go next state.
-		 * 
+		 *
 		 * @param context
 		 */
 		public void goNext(Context context);
@@ -126,7 +129,15 @@ public class AMIinOneFile {
 		public void goNext(final Context context) {
 			MAIN_FRAME.renewMainPanel();
 			MAIN_FRAME.mainPanel.showText("Finish !");
-			MAIN_FRAME.mainPanel.showRestartButton(context);
+			final JButton restartButton = new JButton("Restart");
+			MAIN_FRAME.mainPanel.add(restartButton);
+			restartButton.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					context.setState(null);
+				}
+			});
+			MAIN_FRAME.mainPanel.refresh();
 		}
 	}
 
@@ -139,7 +150,7 @@ public class AMIinOneFile {
 
 		@Override
 		public void goNext(Context context) {
-			printBlocks(context);
+			this.printBlocks(context);
 		}
 
 		private void printBlocks(final Context context) {
@@ -175,7 +186,7 @@ public class AMIinOneFile {
 
 				in = new FileInputStream(context.getCurrentFile());
 				final int blockSize = (MAIN_FRAME.mainPanel.getWidth() * MAIN_FRAME.mainPanel.getHeight() * 3) - 6;
-				final byte[] bytesToPrint = extractBytesFromFile(in, context.getPositionInFile(), blockSize);
+				final byte[] bytesToPrint = this.extractBytesFromFile(in, context.getPositionInFile(), blockSize);
 				MAIN_FRAME.mainPanel.setBytesToPrint(AMIConstants.FIRST_PRINT_PIXEL_COLOR, bytesToPrint);
 
 				if (bytesToPrint[bytesToPrint.length - 2] != -1) {
@@ -184,10 +195,10 @@ public class AMIinOneFile {
 					MAIN_FRAME.addKeyListener(printEnd);
 				}
 
-			} catch (FileNotFoundException e) {
+			} catch (final FileNotFoundException e) {
 				System.err.println(e.getMessage());
 				context.setState(null);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				System.err.println(e.getMessage());
 				context.setState(null);
 			} finally {
@@ -195,7 +206,7 @@ public class AMIinOneFile {
 					if (in != null) {
 						in.close();
 					}
-				} catch (IOException e) {
+				} catch (final IOException e) {
 					System.err.println(e.getMessage());
 					context.setState(null);
 				}
@@ -267,12 +278,12 @@ public class AMIinOneFile {
 		public void goNext(final Context context) {
 			MAIN_FRAME.renewMainPanel();
 			final JButton fileChooserButton = new JButton("File chooser");
-			MAIN_FRAME.mainPanel.setFileChooserButton(fileChooserButton);
+			MAIN_FRAME.mainPanel.add(fileChooserButton);
 			fileChooserButton.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					final File file = MAIN_FRAME.mainPanel.getFileToTransfert();
-					if (file == null || !file.exists()) {
+					if ((file == null) || !file.exists()) {
 						context.setState(WaitFile.INSTANCE);
 					} else {
 						context.setCurrentFile(file);
@@ -290,31 +301,31 @@ public class AMIinOneFile {
 		public MainPanel mainPanel;
 
 		public MainFrame() {
-			renewMainPanel();
+			this.renewMainPanel();
 			this.setVisible(true);
 			this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 			this.setTitle("AMIin");
 		}
 
 		public void renewMainPanel() {
-			if (mainPanel != null) {
-				this.getContentPane().remove(mainPanel);
+			if (this.mainPanel != null) {
+				this.getContentPane().remove(this.mainPanel);
 			}
 			final int winW = (this.getContentPane().getWidth() != 0) ? this.getContentPane().getWidth()
 					: AMIConstants.WIN_W;
 			final int winH = (this.getContentPane().getHeight() != 0) ? this.getContentPane().getHeight()
 					: AMIConstants.WIN_H;
-			mainPanel = MAIN_INSTANCE.new MainPanel(winW, winH);
-			this.getContentPane().add(mainPanel);
+			this.mainPanel = MAIN_INSTANCE.new MainPanel(winW, winH);
+			this.getContentPane().add(this.mainPanel);
 			this.pack();
-			mainPanel.setVisible(true);
+			this.mainPanel.setVisible(true);
 		}
 
 		@Override
 		public synchronized void addKeyListener(KeyListener l) {
 			final KeyListener[] keyListeners = this.getKeyListeners();
 			for (int i = 0; i < keyListeners.length; i++) {
-				removeKeyListener(keyListeners[i]);
+				this.removeKeyListener(keyListeners[i]);
 			}
 			super.addKeyListener(l);
 		}
@@ -324,16 +335,13 @@ public class AMIinOneFile {
 	public class MainPanel extends Panel {
 
 		private int[] bytesToPrint;
-		private JLabel mainLabel = new JLabel();
-		private JButton fileChooserButton;
-		private JButton restartButton;
+		private final JLabel mainLabel = new JLabel();
 
 		public MainPanel(int w, int h) {
-			setPreferredSize(new Dimension(w, h));
-			this.add(mainLabel);
-			hideAll();
+			this.setPreferredSize(new Dimension(w, h));
+			this.add(this.mainLabel);
 		}
-		
+
 		public File getFileToTransfert() {
 			File file = null;
 			final JFileChooser fileChooser = new JFileChooser();
@@ -345,33 +353,27 @@ public class AMIinOneFile {
 			return file;
 		}
 
-		public void hideAll() {
-			bytesToPrint = null;
-			mainLabel.setVisible(false);
-			if (fileChooserButton != null)
-				fileChooserButton.setVisible(false);
-			if (restartButton != null)
-				restartButton.setVisible(false);
-		}
-
 		@Override
 		public void paint(Graphics graph) {
 			super.paint(graph);
 
-			if (bytesToPrint != null) {
+			if (this.bytesToPrint != null) {
 
-				graph.fillRect(0, 0, 1, 1);
+				// graph.fillRect(0, 0, 1, 1);
 
-				int x = 1;
+				// int x = 1;
+				int x = 0;
 				int y = 0;
 				int cnt = 0;
-				while (cnt < bytesToPrint.length) {
+				while (cnt < this.bytesToPrint.length) {
 
-					int r = (bytesToPrint[cnt] >= 0) ? bytesToPrint[cnt] : 0;
+					final int r = (this.bytesToPrint[cnt] >= 0) ? this.bytesToPrint[cnt] : 0;
 					cnt++;
-					int g = (cnt < bytesToPrint.length && bytesToPrint[cnt] >= 0) ? bytesToPrint[cnt] : 0;
+					final int g = ((cnt < this.bytesToPrint.length) && (this.bytesToPrint[cnt] >= 0))
+							? this.bytesToPrint[cnt] : 0;
 					cnt++;
-					int b = (cnt < bytesToPrint.length && bytesToPrint[cnt] >= 0) ? bytesToPrint[cnt] : 0;
+					final int b = ((cnt < this.bytesToPrint.length) && (this.bytesToPrint[cnt] >= 0))
+							? this.bytesToPrint[cnt] : 0;
 					cnt++;
 
 					graph.setColor(new Color(r, g, b));
@@ -391,63 +393,28 @@ public class AMIinOneFile {
 		}
 
 		public void showText(String text) {
-			mainLabel.setText(text);
-			mainLabel.setVisible(true);
+			this.mainLabel.setText(text);
+			this.mainLabel.setVisible(true);
 		}
 
-		public void showRestartButton(Context context) {
-			restartButton = new JButton("Restart");
-			this.add(restartButton);
-			restartButton.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					context.setState(null);
-				}
-			});
-		}
-
-		public JButton getFileChooserButton() {
-			return fileChooserButton;
-		}
-
-		public void setFileChooserButton(JButton fileChooserButton) {
-			if (this.fileChooserButton != null) {
-				this.remove(fileChooserButton);
-			}
-			this.add(fileChooserButton);
-			this.fileChooserButton = fileChooserButton;
-		}
-
-		public JButton getRestartButton() {
-			return restartButton;
-		}
-
-		public void setRestartButton(JButton restartButton) {
-			this.restartButton = restartButton;
-		}
-
-		public int[] getBytesToPrint() {
-			return bytesToPrint;
-		}
-
-		private byte[] colorToBytes(Color color) {
-			final byte[] bytes = new byte[3];
-			bytes[0] = (byte) color.getRed();
-			bytes[1] = (byte) color.getGreen();
-			bytes[2] = (byte) color.getBlue();
-			return bytes;
+		private int[] colorToBytes(Color color) {
+			final int[] table = new int[3];
+			table[0] = color.getRed();
+			table[1] = color.getGreen();
+			table[2] = color.getBlue();
+			return table;
 		}
 
 		public void setBytesToPrint(Color starterPixel, byte[] bytesToPrint) {
-			this.bytesToPrint = bytesToInt(colorToBytes(starterPixel), bytesToPrint);
-			refresh();
+			this.bytesToPrint = this.bytesToInt(this.colorToBytes(starterPixel), bytesToPrint);
+			this.refresh();
 		}
 
 		public void setBytesToPrint(Color starterPixel, String stringToPrint) {
-			this.bytesToPrint = bytesToInt(colorToBytes(starterPixel), stringToPrint.getBytes());
-			refresh();
+			this.bytesToPrint = this.bytesToInt(this.colorToBytes(starterPixel), stringToPrint.getBytes());
+			this.refresh();
 		}
-		
+
 		public void refresh() {
 			MAIN_FRAME.revalidate();
 			MAIN_FRAME.repaint();
@@ -455,13 +422,13 @@ public class AMIinOneFile {
 			this.repaint();
 		}
 
-		private int[] bytesToInt(byte[] starterBytes, byte[] bytes) {
-			int[] result = new int[starterBytes.length + bytes.length];
+		private int[] bytesToInt(int[] starterBytes, byte[] bytes) {
+			final int[] result = new int[starterBytes.length + bytes.length];
 			for (int i = 0; i < starterBytes.length; i++) {
 				result[i] = starterBytes[i];
 			}
-			for (int i = starterBytes.length; i < bytes.length; i++) {
-				result[i] = bytes[i];
+			for (int i = 0; i < bytes.length; i++) {
+				result[starterBytes.length + i] = bytes[i];
 			}
 			return result;
 		}
@@ -477,10 +444,10 @@ public class AMIinOneFile {
 				protected Void doInBackground() throws Exception {
 					try {
 						Thread.sleep(MyAbstractSwingWorker.SLEEP_TIME_MS);
-					} catch (InterruptedException e) {
+					} catch (final InterruptedException e) {
 						System.err.println(e.getMessage());
 					} finally {
-						whatToExecute();
+						MyAbstractSwingWorker.this.whatToExecute();
 					}
 					return null;
 				}
