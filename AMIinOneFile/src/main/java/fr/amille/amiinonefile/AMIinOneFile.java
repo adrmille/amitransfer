@@ -13,10 +13,15 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -183,10 +188,8 @@ public class AMIinOneFile {
 
 			FileInputStream in = null;
 			try {
-
-				in = new FileInputStream(context.getCurrentFile());
 				final int blockSize = (MAIN_FRAME.mainPanel.getWidth() * MAIN_FRAME.mainPanel.getHeight() * 3) - 6;
-				final byte[] bytesToPrint = this.extractBytesFromFile(in, context.getPositionInFile(), blockSize);
+				final byte[] bytesToPrint = this.extractBytesFromFile(context.getCurrentFile(), context.getPositionInFile(), blockSize);
 				MAIN_FRAME.mainPanel.setBytesToPrint(AMIConstants.FIRST_PRINT_PIXEL_COLOR, bytesToPrint);
 
 				if (bytesToPrint[bytesToPrint.length - 2] != -1) {
@@ -194,37 +197,22 @@ public class AMIinOneFile {
 				} else {
 					MAIN_FRAME.addKeyListener(printEnd);
 				}
-
 			} catch (final FileNotFoundException e) {
 				System.err.println(e.getMessage());
 				context.setState(null);
 			} catch (final IOException e) {
 				System.err.println(e.getMessage());
 				context.setState(null);
-			} finally {
-				try {
-					if (in != null) {
-						in.close();
-					}
-				} catch (final IOException e) {
-					System.err.println(e.getMessage());
-					context.setState(null);
-				}
 			}
 		}
 
-		private byte[] extractBytesFromFile(FileInputStream in, int start, int blockSize) throws IOException {
-
-			final byte[] values = new byte[blockSize];
-			int index = 0;
-			int c;
-			in.skip(start);
-			while (index < blockSize) {
-				c = in.read();
-				values[index] = (byte) c;
-				index++;
+		private byte[] extractBytesFromFile(File file, int start, int blockSize) throws IOException {
+			final ByteBuffer bytes = ByteBuffer.allocate(blockSize);
+			try (SeekableByteChannel seekableByteChannel = Files.newByteChannel(Path.of(file.getAbsolutePath()), StandardOpenOption.READ)) {
+				seekableByteChannel.position(start);
+				seekableByteChannel.read(bytes);
+				return bytes.array();
 			}
-			return values;
 		}
 	}
 
@@ -390,6 +378,7 @@ public class AMIinOneFile {
 				graph.setColor(AMIConstants.LAST_PIXEL);
 				graph.fillRect(MAIN_FRAME.mainPanel.getWidth() - 1, MAIN_FRAME.mainPanel.getHeight() - 1, 1, 1);
 			}
+
 		}
 
 		public void showText(String text) {
