@@ -282,7 +282,7 @@ public class AMIinOneFile {
 			fileChooserButton.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					final File file = MAIN_FRAME.mainPanel.getFileToTransfert();
+					final File file = MAIN_FRAME.mainPanel.getFileToTransfer();
 					if ((file == null) || !file.exists()) {
 						context.setState(WaitFile.INSTANCE);
 					} else {
@@ -342,7 +342,7 @@ public class AMIinOneFile {
 			this.add(this.mainLabel);
 		}
 
-		public File getFileToTransfert() {
+		public File getFileToTransfer() {
 			File file = null;
 			final JFileChooser fileChooser = new JFileChooser();
 			MainPanel.this.add(fileChooser);
@@ -436,7 +436,7 @@ public class AMIinOneFile {
 
 	public abstract class MyAbstractSwingWorker {
 
-		public static final int SLEEP_TIME_MS = 50;
+		private static final int SLEEP_TIME_MS = 50;
 
 		public void execute() {
 			final SwingWorker<Void, Void> swingWorker = new SwingWorker<Void, Void>() {
