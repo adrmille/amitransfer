@@ -32,22 +32,19 @@ public class ReadBlocks implements State {
 	@Override
 	public void goNext(final Context context) {
 
-		AMIout.mainFrame.mainPanel.changeState(MainPanel.States.READ_BLOCK,
-				context);
+		AMIout.mainFrame.mainPanel.changeState(MainPanel.States.READ_BLOCK, context);
 
 		// read pixels
-		final int bytesBufferSize = (context.getAreaW() * context.getAreaH() * 3) - 6;
-		final int[] bytes = readPixelArea(context.getFirstPixel(),
-				context.getCurrentImage(), bytesBufferSize, context.getAreaW());
+		final int bytesBufferSize = (context.areaW * context.areaH * 3) - 6;
+		final int[] bytes = readPixelArea(context.firstPixel, context.currentImage, bytesBufferSize, context.areaW);
 
 		if (!context.isMouseMoved()) {
 
 			// write bytes into the file
-			writeBytes(context.getCurrentFile(), bytes, context);
+			writeBytes(context.currentFile, bytes, context);
 
 			// test if we have write the maximum of byte
-			int maxNumberOfByteWeCanWrite = context.getFileSize()
-					- context.getTotalWroteBytes();
+			int maxNumberOfByteWeCanWrite = context.fileSize - context.totalWroteBytes;
 			if (maxNumberOfByteWeCanWrite <= 0) {
 				callForNextScreen(context);
 				context.setState(End.INSTANCE);
@@ -90,8 +87,7 @@ public class ReadBlocks implements State {
 
 	}
 
-	private int[] readPixelArea(FirstPixel firstPixel,
-			BufferedImage bufferedImage, int buffSize, int areaW) {
+	private int[] readPixelArea(FirstPixel firstPixel, BufferedImage bufferedImage, int buffSize, int areaW) {
 
 		int[] pixels = new int[buffSize];
 
@@ -122,14 +118,12 @@ public class ReadBlocks implements State {
 
 			out = new FileOutputStream(file, true);
 
-			int maxNumberOfByteWeCanWrite = context.getFileSize()
-					- context.getTotalWroteBytes();
+			int maxNumberOfByteWeCanWrite = context.fileSize - context.totalWroteBytes;
 
 			for (int i = 0; i < bytes.length && maxNumberOfByteWeCanWrite > 0; i++) {
 				out.write(bytes[i]);
 				context.incrTotalWroteBytes();
-				maxNumberOfByteWeCanWrite = context.getFileSize()
-						- context.getTotalWroteBytes();
+				maxNumberOfByteWeCanWrite = context.fileSize - context.totalWroteBytes;
 			}
 
 		} catch (FileNotFoundException e) {

@@ -6,14 +6,13 @@ package fr.amille.amiout.states;
 import fr.amille.amiout.AMIout;
 import fr.amille.amiout.view.MainPanel;
 
-
 /**
  * @author AMILLE
  * 
  */
 public class Ready implements State {
 
-	public final static Ready INSTANCE = new Ready();
+	public static final Ready INSTANCE = new Ready();
 
 	private Ready() {
 	}

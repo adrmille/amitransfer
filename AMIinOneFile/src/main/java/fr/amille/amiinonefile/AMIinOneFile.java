@@ -83,7 +83,7 @@ public class AMIinOneFile {
 			goNext();
 		}
 
-		public File getCurrentFile() {
+		public File currentFile {
 			return currentFile;
 		}
 
@@ -173,7 +173,7 @@ public class AMIinOneFile {
 			FileInputStream in = null;
 			try {
 
-				in = new FileInputStream(context.getCurrentFile());
+				in = new FileInputStream(context.currentFile);
 				final int blockSize = (MAIN_FRAME.mainPanel.getWidth() * MAIN_FRAME.mainPanel.getHeight() * 3) - 6;
 				final byte[] bytesToPrint = extractBytesFromFile(in, context.getPositionInFile(), blockSize);
 				MAIN_FRAME.mainPanel.setBytesToPrint(AMIConstants.FIRST_PRINT_PIXEL_COLOR, bytesToPrint);
@@ -241,9 +241,9 @@ public class AMIinOneFile {
 				}
 			};
 			final StringBuilder fileInformations = new StringBuilder();
-			fileInformations.append(context.getCurrentFile().getName());
+			fileInformations.append(context.currentFile.getName());
 			fileInformations.append("\n");
-			fileInformations.append(context.getCurrentFile().length());
+			fileInformations.append(context.currentFile.length());
 			fileInformations.append("\n");
 			fileInformations.append(MAIN_FRAME.mainPanel.getWidth());
 			fileInformations.append("\n");

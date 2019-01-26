@@ -63,14 +63,14 @@ public class ShowControlInfo implements State {
 				}
 			}
 		});
-		if (context.getCurrentFile() == null) {
+		if (context.currentFile == null) {
 			System.err.println("Missing file in ShowControlInfo state");
 			context.setState(null);
 		}
 		final StringBuilder fileInformations = new StringBuilder();
-		fileInformations.append(context.getCurrentFile().getName());
+		fileInformations.append(context.currentFile.getName());
 		fileInformations.append("\n");
-		fileInformations.append(context.getCurrentFile().length());
+		fileInformations.append(context.currentFile.length());
 		fileInformations.append("\n");
 		fileInformations.append(AMIin.mainFrame.mainPanel.getWidth());
 		fileInformations.append("\n");

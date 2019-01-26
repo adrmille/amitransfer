@@ -6,7 +6,6 @@ package fr.amille.amiout.states;
 import fr.amille.amiout.AMIout;
 import fr.amille.amiout.view.MainPanel;
 
-
 /**
  * @author AMILLE
  * 

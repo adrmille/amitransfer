@@ -93,12 +93,12 @@ public class PrintBlocks implements State {
 		FileInputStream in = null;
 		try {
 
-			if (!context.getCurrentFile().exists()) {
+			if (!context.currentFile.exists()) {
 				System.err.println("Missing file in PrintBlock state");
 				context.setState(null);
 			}
 
-			in = new FileInputStream(context.getCurrentFile());
+			in = new FileInputStream(context.currentFile);
 			final int blockSize = (AMIin.mainFrame.mainPanel.getWidth()
 					* AMIin.mainFrame.mainPanel.getHeight() * 3) - 6;
 			final int[] bytesToPrint = extractBytesFromFile(in,

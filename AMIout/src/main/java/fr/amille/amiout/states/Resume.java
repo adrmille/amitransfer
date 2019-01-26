@@ -27,16 +27,13 @@ public class Resume implements State {
 		try {
 
 			final Robot robot = new Robot();
-			context.setWhereTheMouseShouldBe(MouseInfo.getPointerInfo()
-					.getLocation());
-			robot.mouseMove(context.getFirstPixel().getX(), context
-					.getFirstPixel().getY());
+			context.whereTheMouseShouldBe = MouseInfo.getPointerInfo().getLocation();
+			robot.mouseMove(context.firstPixel.getX(), context.firstPixel.getY());
 			Thread.sleep(100);
 			robot.mousePress(InputEvent.BUTTON1_MASK);
 			robot.mouseRelease(InputEvent.BUTTON1_MASK);
 			Thread.sleep(100);
-			robot.mouseMove((int) context.getWhereTheMouseShouldBe().getX(),
-					(int) context.getWhereTheMouseShouldBe().getY());
+			robot.mouseMove((int) context.whereTheMouseShouldBe.getX(), (int) context.whereTheMouseShouldBe.getY());
 			Thread.sleep(100);
 			new MyAbstractSwingWorker() {
 				@Override

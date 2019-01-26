@@ -28,7 +28,7 @@ public class MainPanel extends Panel {
 	private JButton startButton;
 
 	private JButton resumeButton;
-	
+
 	private JButton restartButton;
 
 	private void hideAll() {
@@ -58,16 +58,14 @@ public class MainPanel extends Panel {
 			}
 			startButton.setVisible(true);
 		} else if (States.LOOKING_DAT_PIXEL == state) {
-			final int percent = (context.getTotalWroteBytes() * 100)
-					/ context.getFileSize();
+			final int percent = (context.totalWroteBytes * 100) / context.fileSize;
 			mainLabel.setText("Looking for dat pixel (" + percent + "% already done)");
 			mainLabel.setVisible(true);
 		} else if (States.READ_CONTROL == state) {
 			mainLabel.setText("Reading control");
 			mainLabel.setVisible(true);
 		} else if (States.READ_BLOCK == state) {
-			final int percent = (context.getTotalWroteBytes() * 100)
-					/ context.getFileSize();
+			final int percent = (context.totalWroteBytes * 100) / context.fileSize;
 			mainLabel.setText("Reading blocks (" + percent + "% already done)");
 			mainLabel.setVisible(true);
 		} else if (States.PAUSE == state) {

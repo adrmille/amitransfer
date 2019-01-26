@@ -48,7 +48,7 @@ public class Context {
 		return result;
 	}
 
-	public File getCurrentFile() {
+	public File currentFile {
 		return currentFile;
 	}
 

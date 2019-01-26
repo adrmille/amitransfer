@@ -7,14 +7,14 @@ import java.awt.AWTException;
 import java.awt.Color;
 import java.awt.MouseInfo;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.Robot;
-import java.awt.Toolkit;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
+import fr.amille.amiout.Datascreen;
+import fr.amille.amiout.Pixel;
 import fr.amille.amiout.constant.AMIConstants;
 import fr.amille.amiout.view.MyAbstractSwingWorker;
 
@@ -24,31 +24,24 @@ import fr.amille.amiout.view.MyAbstractSwingWorker;
  */
 public class Context {
 
-	private State currentState;
-
-	private File currentFile;
-
-	private FirstPixel firstPixel;
-
-	private BufferedImage currentImage;
-
+	State currentState;
+	File currentFile;
+	Pixel firstPixel;
+	Datascreen datascreen;
 	public static Color expectedFirstPixelColor = AMIConstants.STARTER_PIXEL1;
-
-	private Point whereTheMouseShouldBe;
-
-	private int totalWroteBytes;
-
-	private String fileName;
-	private int fileSize = -1;
-	private int areaW = -1;
-	private int areaH = -1;
+	Point whereTheMouseShouldBe;
+	int totalWroteBytes;
+	String fileName;
+	int fileSize = -1;
+	int areaW = -1;
+	int areaH = -1;
 
 	public void goNext() {
 		if (currentState == null) {
 			// THINK ABOUT ME
 			firstPixel = null;
 			currentFile = null;
-			currentImage = null;
+			datascreen = null;
 			currentState = Ready.INSTANCE;
 			whereTheMouseShouldBe = null;
 			fileName = null;
@@ -65,145 +58,12 @@ public class Context {
 		goNext();
 	}
 
-	public void findFirstPixel() throws InterruptedException {
-
-		setFirstPixel(null);
-
-		currentImage = getScreen();
-
-		if (currentImage == null) {
-			System.err.println("Fail to take a screenshot");
-			backToStartState();
-			return;
-		}
-
-		final int w = currentImage.getWidth();
-		final int h = currentImage.getHeight();
-
-		for (int y = 0; y < h; y++) {
-
-			for (int x = 0; x < w; x++) {
-
-				final Color color = calculateColor(currentImage, x, y);
-
-				if (color.equals(expectedFirstPixelColor)) {
-
-					// get last pixel color
-					final int lastPixelx = x + getAreaW() - 1;
-					final int lastPixely = y + getAreaH() - 1;
-					final Color lastPixelColor = calculateColor(currentImage,
-							lastPixelx, lastPixely);
-					if (!AMIConstants.LAST_PIXEL.equals(lastPixelColor)) {
-						System.out.println("Last pixel not found");
-						new MyAbstractSwingWorker() {
-							@Override
-							public void whatToExecute() {
-								setState(SearchingFirstPiexel.INSTANCE);
-							}
-						}.execute();
-						return;
-					}
-
-					setFirstPixel(new FirstPixel(x, y, color));
-					setState(ReadBlocks.INSTANCE);
-					return;
-				} else if (color.equals(AMIConstants.CONTROL_PIXEL)) {
-					setFirstPixel(new FirstPixel(x, y, color));
-					setState(ReadControl.INSTANCE);
-					return;
-				}
-
-			}
-
-		}
-
-		if (getFirstPixel() == null) {
-			System.out.println("First pixel not found");
-			new MyAbstractSwingWorker() {
-				@Override
-				public void whatToExecute() {
-					setState(SearchingFirstPiexel.INSTANCE);
-				}
-			}.execute();
-		}
-
-	}
-
-	private BufferedImage getScreen() {
-		BufferedImage screen = null;
-		try {
-
-			final Robot robot = new Robot();
-
-			// Capture the whole screen
-			final Rectangle area = new Rectangle(Toolkit.getDefaultToolkit()
-					.getScreenSize());
-			return robot.createScreenCapture(area);
-
-		} catch (AWTException e) {
-			System.err.println(e.getMessage());
-			setState(null);
-		}
-		return screen;
-	}
-
-	public File getCurrentFile() {
-		return currentFile;
-	}
-
-	public final class FirstPixel {
-
-		private int x;
-		private int y;
-		private Color color;
-
-		public FirstPixel(int x, int y, Color color) {
-			super();
-			this.x = x;
-			this.y = y;
-			this.setColor(color);
-		}
-
-		public int getX() {
-			return x;
-		}
-
-		public void setX(int x) {
-			this.x = x;
-		}
-
-		public int getY() {
-			return y;
-		}
-
-		public void setY(int y) {
-			this.y = y;
-		}
-
-		public Color getColor() {
-			return color;
-		}
-
-		public void setColor(Color color) {
-			this.color = color;
-		}
-
-	}
-
 	public static Color calculateColor(BufferedImage bufferedImage, int x, int y) {
 		final int rgb = bufferedImage.getRGB(x, y);
 		int r = (rgb >> 16) & 0xFF;
 		int g = (rgb >> 8) & 0xFF;
 		int b = (rgb & 0xFF);
 		return new Color(r, g, b);
-	}
-
-	public FirstPixel getFirstPixel() {
-		return firstPixel;
-	}
-
-	public void setFirstPixel(FirstPixel firstPixel) {
-		this.firstPixel = firstPixel;
 	}
 
 	public void updateFileInformations() {
@@ -216,7 +76,7 @@ public class Context {
 			return;
 		}
 
-		final int[] bytes = readPixelToBytes(getFirstPixel(), currentImage, 450);
+		final int[] bytes = readPixelToBytes(firstPixel, currentImage, 450);
 		final String fileInformationsRaw = intToString(bytes);
 		if (!fileInformationsRaw.isEmpty()) {
 
@@ -242,9 +102,7 @@ public class Context {
 			final String[] fileInfos = fileInformations.split("\\n");
 			if (fileInfos.length != 5) {
 
-				System.err
-						.println("File informations malformed, should have 5 parameters, found: "
-								+ fileInfos.length);
+				System.err.println("File informations malformed, should have 5 parameters, found: " + fileInfos.length);
 				backToStartState();
 
 			} else {
@@ -252,27 +110,24 @@ public class Context {
 				try {
 					setFileName(fileInfos[0]);
 					setFileSize(Integer.parseInt(fileInfos[1]));
-					setAreaW(Integer.parseInt(fileInfos[2]));
-					setAreaH(Integer.parseInt(fileInfos[3]));
+					areaW = Integer.parseInt(fileInfos[2]);
+					areaH = Integer.parseInt(fileInfos[3]);
 
 					validateFileInformations();
 
 					final Robot robot = new Robot();
-					whereTheMouseShouldBe = MouseInfo.getPointerInfo()
-							.getLocation();
-					robot.mouseMove(getFirstPixel().getX(), getFirstPixel()
-							.getY());
-					
+					whereTheMouseShouldBe = MouseInfo.getPointerInfo().getLocation();
+					robot.mouseMove(firstPixel.getX(), firstPixel.getY());
+
 					Point tempWhereTheMouseIsNow;
 					do {
-						
+
 						Thread.sleep(100);
-						tempWhereTheMouseIsNow = MouseInfo.getPointerInfo()
-								.getLocation();
-						
-					} while (tempWhereTheMouseIsNow.getX() != getFirstPixel().getX() && tempWhereTheMouseIsNow.getY() != getFirstPixel()
-							.getY());
-					
+						tempWhereTheMouseIsNow = MouseInfo.getPointerInfo().getLocation();
+
+					} while (tempWhereTheMouseIsNow.getX() != firstPixel.getX()
+							&& tempWhereTheMouseIsNow.getY() != firstPixel.getY());
+
 					Thread.sleep(100);
 					robot.mousePress(InputEvent.BUTTON1_MASK);
 					robot.mouseRelease(InputEvent.BUTTON1_MASK);
@@ -281,18 +136,17 @@ public class Context {
 					Thread.sleep(1000);
 					robot.keyPress(KeyEvent.VK_N);
 					Thread.sleep(100);
-					
-					robot.mouseMove((int) whereTheMouseShouldBe.getX(),
-							(int) whereTheMouseShouldBe.getY());
-					
+
+					robot.mouseMove((int) whereTheMouseShouldBe.getX(), (int) whereTheMouseShouldBe.getY());
+
 					do {
-						
+
 						Thread.sleep(100);
-						tempWhereTheMouseIsNow = MouseInfo.getPointerInfo()
-								.getLocation();
-						
-					} while (tempWhereTheMouseIsNow.getX() != whereTheMouseShouldBe.getX() && tempWhereTheMouseIsNow.getY() != whereTheMouseShouldBe.getY());
-					
+						tempWhereTheMouseIsNow = MouseInfo.getPointerInfo().getLocation();
+
+					} while (tempWhereTheMouseIsNow.getX() != whereTheMouseShouldBe.getX()
+							&& tempWhereTheMouseIsNow.getY() != whereTheMouseShouldBe.getY());
+
 					Thread.sleep(100);
 					new MyAbstractSwingWorker() {
 						@Override
@@ -320,7 +174,7 @@ public class Context {
 	private void validateFileInformations() {
 
 		final StringBuilder stringBuilder = new StringBuilder();
-		if (getFileName() == null || getFileName().isEmpty()) {
+		if (fileName == null || fileName.isEmpty()) {
 			stringBuilder.append("File name is missing");
 		}
 		if (!stringBuilder.toString().isEmpty()) {
@@ -348,8 +202,7 @@ public class Context {
 		return result;
 	}
 
-	private int[] readPixelToBytes(FirstPixel firstPixel,
-			BufferedImage bufferedImage, int buffSize) {
+	private int[] readPixelToBytes(FirstPixel firstPixel, BufferedImage bufferedImage, int buffSize) {
 
 		int[] bytes = new int[buffSize];
 
@@ -373,18 +226,6 @@ public class Context {
 		return bytes;
 	}
 
-	public BufferedImage getCurrentImage() {
-		return currentImage;
-	}
-
-	public void setCurrentImage(BufferedImage currentImage) {
-		this.currentImage = currentImage;
-	}
-
-	public String getFileName() {
-		return fileName;
-	}
-
 	public void setFileName(String fileName) {
 
 		if (this.fileName != null && !fileName.equals(this.fileName)) {
@@ -393,11 +234,7 @@ public class Context {
 		}
 
 		this.fileName = fileName;
-		currentFile = new File(getFileName());
-	}
-
-	public int getFileSize() {
-		return fileSize;
+		currentFile = new File(fileName);
 	}
 
 	public void setFileSize(int fileSize) {
@@ -411,33 +248,12 @@ public class Context {
 
 	}
 
-	public int getAreaW() {
-		return areaW;
-	}
-
-	public void setAreaW(int areaW) {
-		this.areaW = areaW;
-	}
-
-	public int getAreaH() {
-		return areaH;
-	}
-
-	public void setAreaH(int areaH) {
-		this.areaH = areaH;
-	}
-
 	public void switchFirstPixelColor() {
-		if (expectedFirstPixelColor.getBlue() == AMIConstants.STARTER_PIXEL1
-				.getBlue()) {
+		if (expectedFirstPixelColor.getBlue() == AMIConstants.STARTER_PIXEL1.getBlue()) {
 			expectedFirstPixelColor = AMIConstants.STARTER_PIXEL2;
 		} else {
 			expectedFirstPixelColor = AMIConstants.STARTER_PIXEL1;
 		}
-	}
-
-	public Point getWhereTheMouseShouldBe() {
-		return whereTheMouseShouldBe;
 	}
 
 	/**
@@ -449,29 +265,12 @@ public class Context {
 	}
 
 	public boolean isMouseMoved() {
-		final Point currentMouseLocation = MouseInfo.getPointerInfo()
-				.getLocation();
-		if (currentMouseLocation.getX() != getWhereTheMouseShouldBe().getX()
-				|| currentMouseLocation.getY() != getWhereTheMouseShouldBe()
-						.getY()) {
+		final Point currentMouseLocation = MouseInfo.getPointerInfo().getLocation();
+		if (currentMouseLocation.getX() != whereTheMouseShouldBe.getX()
+				|| currentMouseLocation.getY() != whereTheMouseShouldBe.getY()) {
 			return true;
 		}
 		return false;
-	}
-
-	/**
-	 * @param whereTheMouseShouldBe
-	 *            the whereTheMouseShouldBe to set
-	 */
-	public void setWhereTheMouseShouldBe(Point whereTheMouseShouldBe) {
-		this.whereTheMouseShouldBe = whereTheMouseShouldBe;
-	}
-
-	/**
-	 * @return the totalWroteBytes
-	 */
-	public int getTotalWroteBytes() {
-		return totalWroteBytes;
 	}
 
 	public void incrTotalWroteBytes() {

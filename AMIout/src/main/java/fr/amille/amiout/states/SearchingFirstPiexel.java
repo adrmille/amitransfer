@@ -19,8 +19,7 @@ public class SearchingFirstPiexel implements State {
 
 	@Override
 	public void goNext(final Context context) {
-		AMIout.mainFrame.mainPanel.changeState(
-				MainPanel.States.LOOKING_DAT_PIXEL, context);
+		AMIout.mainFrame.mainPanel.changeState(MainPanel.States.LOOKING_DAT_PIXEL, context);
 		try {
 			context.findFirstPixel();
 		} catch (InterruptedException e) {

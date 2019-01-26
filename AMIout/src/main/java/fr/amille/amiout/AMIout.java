@@ -13,7 +13,7 @@ import fr.amille.amiout.view.MainFrame;
  * 
  */
 public class AMIout {
-	
+
 	public static MainFrame mainFrame;
 
 	public AMIout() {

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="1.11.3">
+  <bpmn:collaboration id="Collaboration_11s9cra">
+    <bpmn:participant id="Participant_16s4ux6" name="AMIin" processRef="Process_1" />
+    <bpmn:participant id="Participant_1t6bz8t" name="AMIout" processRef="Process_1ev7oox" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_1" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" name="Ready">
+      <bpmn:outgoing>SequenceFlow_1pzxkbc</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:intermediateThrowEvent id="IntermediateThrowEvent_1j7waqg" name="Start">
+      <bpmn:incoming>SequenceFlow_1pzxkbc</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1nl6osd</bpmn:outgoing>
+    </bpmn:intermediateThrowEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_1pzxkbc" sourceRef="StartEvent_1" targetRef="IntermediateThrowEvent_1j7waqg" />
+    <bpmn:sequenceFlow id="SequenceFlow_1nl6osd" name="User click on start button" sourceRef="IntermediateThrowEvent_1j7waqg" targetRef="IntermediateThrowEvent_0xjy8qr" />
+    <bpmn:intermediateThrowEvent id="IntermediateThrowEvent_0xjy8qr" name="SearchingFirstPiexel">
+      <bpmn:incoming>SequenceFlow_1nl6osd</bpmn:incoming>
+    </bpmn:intermediateThrowEvent>
+    <bpmn:textAnnotation id="TextAnnotation_1t8jr5j">
+      <bpmn:text>empty</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_0octrfr" sourceRef="IntermediateThrowEvent_1j7waqg" targetRef="TextAnnotation_1t8jr5j" />
+  </bpmn:process>
+  <bpmn:process id="Process_1ev7oox" isExecutable="false" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_11s9cra">
+      <bpmndi:BPMNShape id="Participant_16s4ux6_di" bpmnElement="Participant_16s4ux6">
+        <dc:Bounds x="0" y="0" width="600" height="250" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="46" y="115" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="48" y="151" width="32" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Participant_1t6bz8t_di" bpmnElement="Participant_1t6bz8t">
+        <dc:Bounds x="0" y="285" width="600" height="250" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="IntermediateThrowEvent_1j7waqg_di" bpmnElement="IntermediateThrowEvent_1j7waqg">
+        <dc:Bounds x="143.175" y="115" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="149" y="155" width="24" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1pzxkbc_di" bpmnElement="SequenceFlow_1pzxkbc">
+        <di:waypoint xsi:type="dc:Point" x="82" y="133" />
+        <di:waypoint xsi:type="dc:Point" x="143" y="133" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="112.5" y="112" width="0" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="IntermediateThrowEvent_0xjy8qr_di" bpmnElement="IntermediateThrowEvent_0xjy8qr">
+        <dc:Bounds x="294.175" y="115" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="269" y="155" width="86" height="24" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1nl6osd_di" bpmnElement="SequenceFlow_1nl6osd">
+        <di:waypoint xsi:type="dc:Point" x="179" y="133" />
+        <di:waypoint xsi:type="dc:Point" x="294" y="133" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="189.09722222222223" y="101" width="64" height="24" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="TextAnnotation_1t8jr5j_di" bpmnElement="TextAnnotation_1t8jr5j">
+        <dc:Bounds x="121.55981416957025" y="46.246225319396046" width="99.99274099883856" height="29.997822299651567" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_0octrfr_di" bpmnElement="Association_0octrfr">
+        <di:waypoint xsi:type="dc:Point" x="164" y="116" />
+        <di:waypoint xsi:type="dc:Point" x="170" y="76" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
