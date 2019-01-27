@@ -1,38 +1,19 @@
 package fr.amille.amiinonefile;
 
-/**
- *
- */
-
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Panel;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-
-import javax.swing.JButton;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
+import java.util.Properties;
 
 /**
  * Don't mind the code not following standards, this have to fit into one class
- * so it can be easily copied into the target environment.
+ * so it can be easily copied into a target environment.
  *
  * @author amille
  */
@@ -40,7 +21,34 @@ public class AMIinOneFile {
 
 	public static MainFrame MAIN_FRAME;
 	public static AMIinOneFile MAIN_INSTANCE;
-	public static char NEXT_KEY = 'n';
+	public static final char NEXT_KEY;
+
+	public static final int WIN_W;
+	public static final int WIN_H;
+	public static Color FIRST_PRINT_PIXEL_COLOR;
+	public static final Color CONTROL_PIXEL_COLOR;
+	public static final Color LAST_PIXEL;
+
+	static {
+		final Properties properties = new Properties();
+		try (final FileReader fileReader = new FileReader("application.properties");) {
+			properties.load(fileReader);
+		} catch (IOException e) {
+			System.out.println("application.properties file not found, the application will use default properties");
+		}
+		NEXT_KEY = ((String) properties.getOrDefault("NEXT_KEY", "n")).charAt(0);
+		WIN_W = Integer.parseInt((String) properties.getOrDefault("WIN_W", "300"));
+		WIN_H = Integer.parseInt((String) properties.getOrDefault("WIN_H", "300"));
+		final String[] firstPrintPixelColors = ((String) properties.getOrDefault("FIRST_PRINT_PIXEL_COLOR", "255,73,250")).split(",");
+		FIRST_PRINT_PIXEL_COLOR = new Color(Integer.parseInt(firstPrintPixelColors[0]),
+				Integer.parseInt(firstPrintPixelColors[1]), Integer.parseInt(firstPrintPixelColors[2]));
+		final String[] controlPixelColors = ((String) properties.getOrDefault("CONTROL_PIXEL_COLOR", "255,73,252")).split(",");
+		CONTROL_PIXEL_COLOR = new Color(Integer.parseInt(controlPixelColors[0]),
+				Integer.parseInt(controlPixelColors[1]), Integer.parseInt(controlPixelColors[2]));
+		final String[] lastPixelColors = ((String) properties.getOrDefault("LAST_PIXEL", "255,73,253")).split(",");
+		LAST_PIXEL = new Color(Integer.parseInt(lastPixelColors[0]),
+				Integer.parseInt(lastPixelColors[1]), Integer.parseInt(lastPixelColors[2]));
+	}
 
 	/**
 	 * @param args
@@ -56,18 +64,16 @@ public class AMIinOneFile {
 			public void run() {
 				MAIN_FRAME = new MainFrame();
 				MAIN_FRAME.setVisible(true);
+				MAIN_FRAME.addWindowListener(new WindowAdapter() {
+					@Override
+					public void windowClosing(WindowEvent e) {
+						System.exit(0);
+					}
+				});
 				final Context context = new Context();
 				context.goNext();
 			}
 		});
-	}
-
-	public interface AMIConstants {
-		public static final int WIN_W = 300;
-		public static final int WIN_H = 300;
-		public static Color FIRST_PRINT_PIXEL_COLOR = new Color(255, 73, 250);
-		public static final Color CONTROL_PIXEL_COLOR = new Color(255, 73, 252);
-		public static final Color LAST_PIXEL = new Color(255, 73, 253);
 	}
 
 	public class Context {
@@ -190,7 +196,7 @@ public class AMIinOneFile {
 			try {
 				final int blockSize = (MAIN_FRAME.mainPanel.getWidth() * MAIN_FRAME.mainPanel.getHeight() * 3) - 6;
 				final byte[] bytesToPrint = this.extractBytesFromFile(context.getCurrentFile(), context.getPositionInFile(), blockSize);
-				MAIN_FRAME.mainPanel.setBytesToPrint(AMIConstants.FIRST_PRINT_PIXEL_COLOR, bytesToPrint);
+				MAIN_FRAME.mainPanel.setBytesToPrint(FIRST_PRINT_PIXEL_COLOR, bytesToPrint);
 
 				if (bytesToPrint[bytesToPrint.length - 2] != -1) {
 					MAIN_FRAME.addKeyListener(printNext);
@@ -250,7 +256,7 @@ public class AMIinOneFile {
 			fileInformations.append("\n");
 			fileInformations.append(context.getPositionInFile());
 			fileInformations.append("EOF_EOF");
-			MAIN_FRAME.mainPanel.setBytesToPrint(AMIConstants.CONTROL_PIXEL_COLOR, fileInformations.toString());
+			MAIN_FRAME.mainPanel.setBytesToPrint(CONTROL_PIXEL_COLOR, fileInformations.toString());
 			MAIN_FRAME.addKeyListener(keyAdapter);
 		}
 	}
@@ -300,9 +306,9 @@ public class AMIinOneFile {
 				this.getContentPane().remove(this.mainPanel);
 			}
 			final int winW = (this.getContentPane().getWidth() != 0) ? this.getContentPane().getWidth()
-					: AMIConstants.WIN_W;
+					: WIN_W;
 			final int winH = (this.getContentPane().getHeight() != 0) ? this.getContentPane().getHeight()
-					: AMIConstants.WIN_H;
+					: WIN_H;
 			this.mainPanel = MAIN_INSTANCE.new MainPanel(winW, winH);
 			this.getContentPane().add(this.mainPanel);
 			this.pack();
@@ -375,7 +381,7 @@ public class AMIinOneFile {
 
 				}
 
-				graph.setColor(AMIConstants.LAST_PIXEL);
+				graph.setColor(LAST_PIXEL);
 				graph.fillRect(MAIN_FRAME.mainPanel.getWidth() - 1, MAIN_FRAME.mainPanel.getHeight() - 1, 1, 1);
 			}
 
