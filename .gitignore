@@ -1,3 +1,6 @@
 .git
 .metadata
 RemoteSystemsTempFiles
+*.iml
+.idea
+*.bak

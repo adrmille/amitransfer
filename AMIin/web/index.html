@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
+<input type='file' accept='*' onchange='openFile(event)'><br>
+<img id='output'>
+<script>
+
+  let totalSize = 0;
+  const chunkSize = 1000000;
+
+  function readFile(file, readIndex) {
+    const reader = new FileReader();
+    reader.onload = async function () {
+      const arrayBuffer = reader.result;
+      const view = new Int8Array(arrayBuffer);
+      totalSize += view.length;
+      // await new Promise(r => setTimeout(r, 1000));
+      const index = readIndex / chunkSize;
+      console.log("index: " + index);
+      if (readIndex < file.size) {
+        readFile(file, readIndex + chunkSize);
+      } else {
+        console.log("totalSize:" + totalSize);
+      }
+    };
+    reader.readAsArrayBuffer(file.slice(readIndex, readIndex + chunkSize));
+  }
+
+  const openFile = async function (event) {
+    const input = event.target;
+    const file = input.files[0];
+    readFile(file, 0)
+  };
+
+</script>
+
+
+</body>
+</html>
