@@ -5,35 +5,33 @@
   <title>Title</title>
 </head>
 <body>
-<input type='file' accept='*' onchange='openFile(event)'><br>
-<img id='output'>
+<input type='file' accept='*'/><br/>
+<canvas id="canvas"></canvas>
 <script>
 
-  let totalSize = 0;
-  const chunkSize = 1000000;
+  // await new Promise(r => setTimeout(r, 1000));
+  const context = {};
+  const CHUNK_SIZE = 1000000;
 
   function readFile(file, readIndex) {
     const reader = new FileReader();
     reader.onload = async function () {
-      const arrayBuffer = reader.result;
-      const view = new Int8Array(arrayBuffer);
-      totalSize += view.length;
-      // await new Promise(r => setTimeout(r, 1000));
-      const index = readIndex / chunkSize;
+      const view = new Int8Array(reader.result);
+      context.totalSize += view.length;
+      const index = readIndex / CHUNK_SIZE;
       console.log("index: " + index);
       if (readIndex < file.size) {
-        readFile(file, readIndex + chunkSize);
+        readFile(file, readIndex + CHUNK_SIZE);
       } else {
-        console.log("totalSize:" + totalSize);
+        console.log("totalSize: " + context.totalSize);
       }
     };
-    reader.readAsArrayBuffer(file.slice(readIndex, readIndex + chunkSize));
+    reader.readAsArrayBuffer(file.slice(readIndex, readIndex + CHUNK_SIZE));
   }
 
-  const openFile = async function (event) {
-    const input = event.target;
-    const file = input.files[0];
-    readFile(file, 0)
+  document.querySelector('input').onchange = async function (event) {
+    context.totalSize = 0;
+    readFile(event.target.files[0], 0)
   };
 
 </script>
